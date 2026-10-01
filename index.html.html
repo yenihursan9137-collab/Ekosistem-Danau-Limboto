@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPI IPAS Fase C: Ekosistem</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Fredoka', 'sans-serif'],
+                    },
+                    colors: {
+                        'nature-green': '#2d6a4f',
+                        'leaf-light': '#d8f3dc',
+                        'sky-blue': '#7dd3fc',
+                        'earth-brown': '#9a3412',
+                        'sun-yellow': '#fde047',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #f8fafc;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Drag and Drop Styles */
+        .draggable {
+            cursor: grab;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .draggable:active {
+            cursor: grabbing;
+            transform: scale(0.95);
+        }
+        .dropzone {
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        .dropzone.dragover {
+            background-color: #f0fdf4;
+            border-color: #22c55e;
+            border-style: solid;
+        }
+
+        /* Animations */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        /* Plant Simulation Styles */
+        #sim-plant {
+            transition: all 0.5s ease;
+            transform-origin: bottom center;
+        }
+        
+        /* Quiz Styles */
+        .quiz-option {
+            transition: all 0.2s;
+        }
+        .quiz-option:hover:not(:disabled) {
+            transform: translateX(5px);
+            background-color: #f1f5f9;
+        }
+        .correct-answer { background-color: #dcfce7 !important; border-color: #22c55e !important; }
+        .wrong-answer { background-color: #fee2e2 !important; border-color: #ef4444 !important; }
+
+        /* Hide sections initially */
+        .module-section { display: none; animation: fadeIn 0.5s ease; }
+        .module-section.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased min-h-screen flex flex-col">
+
+    <header class="bg-nature-green text-white sticky top-0 z-50 shadow-md">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center">
+            <div class="flex items-center gap-3">
+                <svg class="w-8 h-8 text-sun-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <h1 class="font-heading text-xl md:text-2xl font-bold">Eksplorasi Ekosistem</h1>
+            </div>
+            
+            <nav class="flex gap-2 mt-2 md:mt-0 overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
+                <button onclick="navTo('intro')" class="nav-btn bg-white/20 hover:bg-white/40 px-3 py-1.5 rounded-full text-sm font-medium transition whitespace-nowrap">1. Pendahuluan</button>
+                <button onclick="navTo('komponen')" class="nav-btn hover:bg-white/20 px-3 py-1.5 rounded-full text-sm font-medium transition whitespace-nowrap">2. Komponen</button>
+                <button onclick="navTo('interaksi')" class="nav-btn hover:bg-white/20 px-3 py-1.5 rounded-full text-sm font-medium transition whitespace-nowrap">3. Interaksi</button>
+                <button onclick="navTo('kuis')" class="nav-btn hover:bg-white/20 px-3 py-1.5 rounded-full text-sm font-medium transition whitespace-nowrap">4. Kuis Evaluasi</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-6xl mx-auto w-full px-4 py-8">
+        
+        <section id="intro" class="module-section active glass-panel rounded-3xl p-6 md:p-10 mb-8">
+            <div class="flex flex-col md:flex-row gap-8 items-center">
+                <div class="flex-1">
+                    <span class="bg-sky-100 text-sky-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">Fase C - Kelas V MI</span>
+                    <h2 class="font-heading text-3xl md:text-4xl font-bold text-nature-green mt-4 mb-4">Apa itu Ekosistem?</h2>
+                    <p class="text-lg leading-relaxed mb-4">
+                        Menurut materi kita, <strong>Ekosistem</strong> adalah sistem interaksi antara makhluk hidup (tumbuhan, hewan, mikroorganisme) dan lingkungan fisik (tanah, air, udara).
+                    </p>
+                    <div class="bg-leaf-light border-l-4 border-nature-green p-4 rounded-r-xl mb-6">
+                        <h3 class="font-bold text-nature-green mb-1 flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            Konteks Lokal: Sekitar Kita
+                        </h3>
+                        <p class="text-sm">
+                            Coba bayangkan lingkungan di sekitar madrasah kita, dekat dengan <strong>Danau Limboto</strong>. Di sana ada ikan, burung bangau, enceng gondok (makhluk hidup) yang berinteraksi dengan air danau, cahaya matahari yang terik, dan tanah lumpur (lingkungan fisik). Itulah contoh ekosistem yang nyata!
+                        </p>
+                    </div>
+                    <button onclick="navTo('komponen')" class="bg-nature-green hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transform transition hover:-translate-y-1 flex items-center gap-2">
+                        Mulai Eksplorasi <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </button>
+                </div>
+                <div class="flex-1 flex justify-center">
+                    <!-- Decorative SVG Illustration -->
+                    <svg class="w-full max-w-sm animate-float" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Sun -->
+                        <circle cx="160" cy="40" r="25" fill="#fde047" />
+                        <!-- Cloud -->
+                        <path d="M 40 60 Q 50 40 70 50 Q 90 30 110 50 Q 130 50 130 70 L 30 70 Q 20 60 40 60 Z" fill="#fff" opacity="0.9"/>
+                        <!-- Tree/Plant -->
+                        <path d="M 90 180 L 110 180 L 105 100 L 95 100 Z" fill="#8B4513" />
+                        <circle cx="100" cy="90" r="35" fill="#2d6a4f" />
+                        <circle cx="80" cy="110" r="25" fill="#4ade80" />
+                        <circle cx="120" cy="110" r="25" fill="#4ade80" />
+                        <!-- Water -->
+                        <path d="M 0 170 Q 50 150 100 170 T 200 170 L 200 200 L 0 200 Z" fill="#7dd3fc" opacity="0.6"/>
+                        <!-- Fish -->
+                        <ellipse cx="150" cy="185" rx="10" ry="5" fill="#f97316" />
+                        <polygon points="140,185 130,180 130,190" fill="#f97316" />
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <section id="komponen" class="module-section glass-panel rounded-3xl p-6 md:p-10 mb-8">
+            <h2 class="font-heading text-3xl font-bold text-center text-nature-green mb-2">Komponen Ekosistem</h2>
+            <p class="text-center text-gray-600 mb-8">Ekosistem terbagi menjadi dua komponen utama. Kelompokkan objek-objek berikut ke tempat yang tepat dengan cara menarik (drag) dan melepasnya (drop)!</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <!-- Dropzone Biotik -->
+                <div class="bg-green-50 rounded-2xl p-4 border-2 border-dashed border-green-300 flex flex-col h-64 relative dropzone" id="zone-biotik" ondragover="allowDrop(event)" ondrop="drop(event, 'biotik')">
+                    <h3 class="font-bold text-xl text-center text-green-800 mb-2 border-b border-green-200 pb-2">Komponen BIOTIK</h3>
+                    <p class="text-xs text-center text-green-600 mb-2">Bagian yang terdiri dari makhluk hidup.</p>
+                    <div id="container-biotik" class="flex-grow flex flex-wrap gap-2 content-start p-2"></div>
+                </div>
+
+                <!-- Dropzone Abiotik -->
+                <div class="bg-blue-50 rounded-2xl p-4 border-2 border-dashed border-blue-300 flex flex-col h-64 relative dropzone" id="zone-abiotik" ondragover="allowDrop(event)" ondrop="drop(event, 'abiotik')">
+                    <h3 class="font-bold text-xl text-center text-blue-800 mb-2 border-b border-blue-200 pb-2">Komponen ABIOTIK</h3>
+                    <p class="text-xs text-center text-blue-600 mb-2">Unsur tak hidup yang mendukung kehidupan.</p>
+                    <div id="container-abiotik" class="flex-grow flex flex-wrap gap-2 content-start p-2"></div>
+                </div>
+            </div>
+
+            <!-- Draggable Items Pool -->
+            <div class="bg-gray-100 p-4 rounded-xl shadow-inner">
+                <p class="text-sm font-semibold text-gray-500 mb-3 text-center">Tarik kotak di bawah ini:</p>
+                <div id="item-pool" class="flex flex-wrap justify-center gap-3">
+                    <!-- Items generated by JS -->
+                </div>
+            </div>
+            
+            <div id="dnd-feedback" class="mt-4 text-center font-bold text-lg h-8"></div>
+            
+            <div class="flex justify-between mt-6">
+                <button onclick="navTo('intro')" class="px-4 py-2 text-gray-600 hover:text-gray-900 font-medium">← Kembali</button>
+                <button onclick="navTo('interaksi')" class="bg-nature-green hover:bg-green-700 text-white font-bold py-2 px-6 rounded-xl shadow">Lanjut: Interaksi →</button>
+            </div>
+        </section>
+
+        <section id="interaksi" class="module-section glass-panel rounded-3xl p-6 md:p-10 mb-8">
+            <h2 class="font-heading text-3xl font-bold text-center text-nature-green mb-2">Interaksi dalam Ekosistem</h2>
+            <p class="text-center text-gray-600 mb-8">Makhluk hidup sangat bergantung pada lingkungan fisik di sekitarnya.</p>
+
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-8">
+                <h3 class="font-bold text-xl text-earth-brown mb-4">Simulasi Fotosintesis (Biotik - Abiotik)</h3>
+                <p class="text-sm mb-6">Tumbuhan (Biotik) butuh Cahaya Matahari dan Air (Abiotik) untuk membuat makanannya sendiri. Geser tombol di bawah untuk melihat pengaruh lingkungan abiotik terhadap pertumbuhan tanaman!</p>
+                
+                <div class="flex flex-col md:flex-row gap-8 items-center">
+                    <!-- Controls -->
+                    <div class="flex-1 w-full space-y-6 bg-gray-50 p-6 rounded-xl">
+                        <div>
+                            <label class="flex justify-between font-bold text-sm text-yellow-600 mb-2">
+                                <span>Cahaya Matahari</span>
+                                <span id="val-light">50%</span>
+                            </label>
+                            <input type="range" id="slider-light" min="0" max="100" value="50" class="w-full accent-yellow-400">
+                        </div>
+                        <div>
+                            <label class="flex justify-between font-bold text-sm text-blue-600 mb-2">
+                                <span>Ketersediaan Air</span>
+                                <span id="val-water">50%</span>
+                            </label>
+                            <input type="range" id="slider-water" min="0" max="100" value="50" class="w-full accent-blue-500">
+                        </div>
+                        <div id="sim-feedback" class="p-3 bg-white border-l-4 border-gray-300 rounded text-sm min-h-[4rem] flex items-center text-gray-700 font-medium">
+                            Geser slider untuk melihat perubahan.
+                        </div>
+                    </div>
+
+                    <!-- Visual Output -->
+                    <div class="flex-1 flex justify-center items-end h-64 w-full bg-sky-50 rounded-xl border border-sky-100 relative overflow-hidden">
+                        <!-- Sun representation -->
+                        <div id="sim-sun" class="absolute top-4 right-4 bg-yellow-400 rounded-full transition-all duration-300" style="width: 40px; height: 40px; opacity: 0.5;"></div>
+                        
+                        <!-- Plant representation -->
+                        <svg id="sim-plant" width="100" height="150" viewBox="0 0 100 150" class="z-10 transition-all duration-500" style="transform: scale(0.8);">
+                            <path id="plant-stem" d="M 50 150 L 50 50" stroke="#16a34a" stroke-width="6" stroke-linecap="round"/>
+                            <path id="plant-leaf1" d="M 50 100 Q 20 80 10 110 Q 30 130 50 100" fill="#22c55e" />
+                            <path id="plant-leaf2" d="M 50 70 Q 80 50 90 80 Q 70 100 50 70" fill="#22c55e" />
+                        </svg>
+                        
+                        <!-- Ground -->
+                        <div class="absolute bottom-0 w-full h-8 bg-earth-brown opacity-80 z-20"></div>
+                        <!-- Water level visual indicator -->
+                        <div id="sim-water-level" class="absolute bottom-0 w-full h-2 bg-blue-500 z-30 transition-all duration-300" style="opacity: 0.5;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interaksi Biotik-Biotik -->
+            <div class="mt-10">
+                <h3 class="font-bold text-xl text-nature-green mb-4 border-b pb-2">Interaksi Antar Makhluk Hidup (Biotik - Biotik)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-green-50 p-4 rounded-xl hover:shadow-md transition">
+                        <h4 class="font-bold text-green-800 flex items-center gap-2 mb-2">
+                            <span class="text-xl">🤝</span> Mutualisme
+                        </h4>
+                        <p class="text-sm">Hubungan saling menguntungkan. <br><strong>Contoh di alam:</strong> Burung Jalak memakan kutu di punggung kerbau. Jalak kenyang, kerbau bebas kutu.</p>
+                    </div>
+                    <div class="bg-yellow-50 p-4 rounded-xl hover:shadow-md transition">
+                        <h4 class="font-bold text-yellow-800 flex items-center gap-2 mb-2">
+                            <span class="text-xl">😐</span> Komensalisme
+                        </h4>
+                        <p class="text-sm">Satu untung, yang lain tidak rugi. <br><strong>Contoh di alam:</strong> Tumbuhan paku menempel di pohon besar untuk mendapat cahaya, pohon besar tidak terganggu.</p>
+                    </div>
+                    <div class="bg-red-50 p-4 rounded-xl hover:shadow-md transition">
+                        <h4 class="font-bold text-red-800 flex items-center gap-2 mb-2">
+                            <span class="text-xl">🧛</span> Parasitisme
+                        </h4>
+                        <p class="text-sm">Satu untung, yang lain dirugikan. <br><strong>Contoh di alam:</strong> Benalu menempel dan menghisap nutrisi dari pohon mangga.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between mt-8">
+                <button onclick="navTo('komponen')" class="px-4 py-2 text-gray-600 hover:text-gray-900 font-medium">← Kembali</button>
+                <button onclick="navTo('kuis')" class="bg-nature-green hover:bg-green-700 text-white font-bold py-2 px-6 rounded-xl shadow">Uji Pemahaman →</button>
+            </div>
+        </section>
+
+        <section id="kuis" class="module-section glass-panel rounded-3xl p-6 md:p-10 mb-8 relative overflow-hidden">
+            <h2 class="font-heading text-3xl font-bold text-center text-nature-green mb-6">Kuis Evaluasi</h2>
+            
+            <div id="quiz-intro" class="max-w-2xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
+                <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Data Siswa</h3>
+                <p class="text-sm text-gray-600 mb-6">Silakan isi nama dan kelas sebelum memulai kuis. Hasil evaluasi akan otomatis masuk ke database guru.</p>
+                
+                <div class="space-y-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Nama Lengkap</label>
+                        <input type="text" id="input-nama" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-nature-green" placeholder="Contoh: Ahmad Abdullah" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Kelas</label>
+                        <select id="input-kelas" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-nature-green" required>
+                            <option value="">-- Pilih Kelas --</option>
+                            <option value="V A">Kelas V A</option>
+                            <option value="V B">Kelas V B</option>
+                            <option value="V C">Kelas V C</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button onclick="startQuiz()" class="w-full bg-nature-green hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition">Mulai Kuis Sekarang</button>
+                <div id="intro-error" class="hidden text-red-500 text-sm font-bold mt-3 text-center">Harap isi nama dan kelas terlebih dahulu!</div>
+            </div>
+
+            <!-- Quiz Container (disembunyikan di awal) -->
+            <div id="quiz-container" class="hidden max-w-2xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <!-- Progress -->
+                <div class="flex justify-between items-center mb-4 text-sm font-bold text-gray-500">
+                    <span id="quiz-progress">Pertanyaan 1 dari 10</span>
+                    <span class="bg-sky-100 text-sky-800 px-2 py-1 rounded">Skor: <span id="quiz-score-live">0</span></span>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="w-full bg-gray-200 rounded-full h-2 mb-6">
+                    <div id="quiz-progress-bar" class="bg-nature-green h-2 rounded-full transition-all duration-300" style="width: 10%"></div>
+                </div>
+
+                <!-- Question Area -->
+                <h3 id="quiz-question" class="text-xl font-bold text-gray-800 mb-6">Memuat pertanyaan...</h3>
+                
+                <!-- Options Area -->
+                <div id="quiz-options" class="space-y-3 mb-6">
+                    <!-- Buttons generated by JS -->
+                </div>
+
+                <!-- Feedback Area -->
+                <div id="quiz-feedback" class="hidden p-4 rounded-xl mb-4 text-sm">
+                    <p id="quiz-feedback-text" class="font-medium"></p>
+                    <p id="quiz-feedback-detail" class="text-gray-600 mt-1 italic"></p>
+                </div>
+
+                <div class="flex justify-end hidden" id="quiz-next-container">
+                    <button id="btn-next-quiz" onclick="nextQuestion()" class="bg-sky-500 hover:bg-sky-600 text-white font-bold py-2 px-6 rounded-xl shadow transition">Selanjutnya &raquo;</button>
+                </div>
+            </div>
+
+            <!-- Final Result Screen -->
+            <div id="quiz-result" class="hidden max-w-2xl mx-auto text-center bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                
+                <div id="loading-save" class="mb-8">
+                    <svg class="animate-spin h-10 w-10 text-nature-green mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="text-lg font-bold text-gray-700 animate-pulse">Menyimpan analisis hasil ke database Guru...</p>
+                </div>
+
+                <div id="result-content" class="hidden">
+                    <div class="text-6xl mb-4" id="result-emoji">🏆</div>
+                    <h2 class="text-3xl font-bold text-nature-green mb-2">Evaluasi Selesai!</h2>
+                    <p class="text-gray-600 mb-6">Nilai Akhir Kamu:</p>
+                    <div class="text-5xl font-heading font-bold text-sky-500 mb-8" id="final-score">100</div>
+                    
+                    <p id="result-message" class="text-lg font-medium mb-8 text-gray-700"></p>
+
+                    <div class="flex gap-4 justify-center">
+                        <button onclick="resetQuiz()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-6 rounded-xl transition">Ulangi Kuis</button>
+                        <button onclick="navTo('intro')" class="bg-nature-green hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl shadow transition">Kembali ke Awal</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white mt-auto border-t border-gray-200">
+        <div class="max-w-6xl mx-auto px-4 py-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="text-sm text-gray-500 text-center md:text-left">
+                    <p>&copy; 2026 Modul IPAS Fase C - Ekosistem</p>
+                    <p>Dikembangkan khusus untuk Guru Madrasah (MIN 2 Kab. Gorontalo)</p>
+                </div>
+                
+                <!-- Profil Pengembang -->
+                <div class="flex items-center gap-3 bg-gray-50 p-2 pr-4 rounded-full border border-gray-100 shadow-sm">
+                    <img src="https://iili.io/na4xdSS.jpg" alt="Foto Yeni Hursan" class="w-10 h-10 rounded-full object-cover border-2 border-nature-green">
+                    <div class="text-xs">
+                        <p class="font-bold text-gray-800">YENI HURSAN, S.Pd.SD</p>
+                        <p class="text-nature-green">Pengembang MPI / Guru</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // --- 1. Navigation Logic ---
+        function navTo(sectionId) {
+            // Update active state in nav buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-white/20');
+                if(btn.innerText.toLowerCase().includes(sectionId.substring(0,4))) {
+                    btn.classList.add('bg-white/20');
+                }
+            });
+
+            // Hide all sections, show target
+            document.querySelectorAll('.module-section').forEach(sec => {
+                sec.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- 2. Drag and Drop Logic ---
+        const dndItems = [
+            { id: 'i1', name: 'Matahari', type: 'abiotik', icon: '☀️' },
+            { id: 'i2', name: 'Burung Kuntul', type: 'biotik', icon: '🕊️' },
+            { id: 'i3', name: 'Air Danau', type: 'abiotik', icon: '💧' },
+            { id: 'i4', name: 'Bakteri', type: 'biotik', icon: '🦠' },
+            { id: 'i5', name: 'Tanah Lumpur', type: 'abiotik', icon: '🪨' },
+            { id: 'i6', name: 'Ikan Nila', type: 'biotik', icon: '🐟' },
+            { id: 'i7', name: 'Udara (Oksigen)', type: 'abiotik', icon: '💨' },
+            { id: 'i8', name: 'Eceng Gondok', type: 'biotik', icon: '🌿' }
+        ];
+
+        function initDragAndDrop() {
+            const pool = document.getElementById('item-pool');
+            pool.innerHTML = ''; // Clear existing
+            
+            // Randomize order
+            const shuffled = [...dndItems].sort(() => 0.5 - Math.random());
+            
+            shuffled.forEach(item => {
+                const el = document.createElement('div');
+                el.id = item.id;
+                el.className = 'draggable bg-white px-3 py-2 border border-gray-200 rounded-lg shadow-sm text-sm font-medium flex items-center gap-1 hover:border-nature-green';
+                el.draggable = true;
+                el.setAttribute('data-type', item.type);
+                el.innerHTML = `<span class="text-lg">${item.icon}</span> ${item.name}`;
+                el.ondragstart = drag;
+                pool.appendChild(el);
+            });
+            
+            // Clear dropzones
+            document.getElementById('container-biotik').innerHTML = '';
+            document.getElementById('container-abiotik').innerHTML = '';
+            document.getElementById('dnd-feedback').innerText = '';
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.id);
+        }
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+            // Highlight dropzone
+            if(ev.currentTarget.classList.contains('dropzone')) {
+               // ev.currentTarget.classList.add('dragover');
+            }
+        }
+
+        function drop(ev, targetZoneType) {
+            ev.preventDefault();
+            const data = ev.dataTransfer.getData("text");
+            const draggedElement = document.getElementById(data);
+            
+            if (!draggedElement) return;
+
+            const itemType = draggedElement.getAttribute('data-type');
+            const feedbackEl = document.getElementById('dnd-feedback');
+
+            if (itemType === targetZoneType) {
+                // Correct
+                ev.currentTarget.querySelector('div').appendChild(draggedElement);
+                draggedElement.draggable = false; // Disable dragging once placed correctly
+                draggedElement.classList.remove('cursor-grab');
+                draggedElement.classList.add('cursor-default', 'bg-green-100', 'border-green-400');
+                
+                feedbackEl.innerText = `Benar! ${draggedElement.innerText} adalah komponen ${targetZoneType.toUpperCase()}.`;
+                feedbackEl.className = "mt-4 text-center font-bold text-lg h-8 text-green-600";
+                
+                checkAllDropped();
+            } else {
+                // Incorrect
+                feedbackEl.innerText = `Kurang tepat. Coba lagi!`;
+                feedbackEl.className = "mt-4 text-center font-bold text-lg h-8 text-red-500";
+                
+                // Shake animation
+                draggedElement.style.transform = 'translateX(-5px)';
+                setTimeout(() => draggedElement.style.transform = 'translateX(5px)', 100);
+                setTimeout(() => draggedElement.style.transform = 'translateX(0)', 200);
+            }
+        }
+
+        function checkAllDropped() {
+            const pool = document.getElementById('item-pool');
+            if(pool.children.length === 0) {
+                document.getElementById('dnd-feedback').innerHTML = `🎉 <span class="text-nature-green">Hebat! Kamu berhasil mengelompokkan semuanya.</span>`;
+            }
+        }
+
+        // Initialize DND on load
+        window.addEventListener('DOMContentLoaded', initDragAndDrop);
+
+        // --- 3. Plant Simulation Logic ---
+        const sliderLight = document.getElementById('slider-light');
+        const sliderWater = document.getElementById('slider-water');
+        const valLight = document.getElementById('val-light');
+        const valWater = document.getElementById('val-water');
+        
+        const simPlant = document.getElementById('sim-plant');
+        const leaf1 = document.getElementById('plant-leaf1');
+        const leaf2 = document.getElementById('plant-leaf2');
+        const stem = document.getElementById('plant-stem');
+        const simSun = document.getElementById('sim-sun');
+        const simWaterLvl = document.getElementById('sim-water-level');
+        const simFeedback = document.getElementById('sim-feedback');
+
+        function updateSimulation() {
+            const light = parseInt(sliderLight.value);
+            const water = parseInt(sliderWater.value);
+            
+            valLight.innerText = light + '%';
+            valWater.innerText = water + '%';
+
+            // Visual Updates
+            simSun.style.opacity = Math.max(0.2, light / 100);
+            simSun.style.transform = `scale(${0.5 + (light/200)})`;
+            
+            simWaterLvl.style.height = `${(water / 100) * 20}px`;
+            simWaterLvl.style.opacity = Math.max(0.3, water / 100);
+
+            // Plant Logic
+            let plantScale = 0.5; // base scale
+            let plantColor = '#22c55e'; // default green
+            let stemColor = '#16a34a';
+            let message = "";
+            let messageColor = "border-gray-300";
+
+            if (light < 30 && water < 30) {
+                plantScale = 0.6;
+                plantColor = '#d97706'; // brown/dead
+                stemColor = '#92400e';
+                message = "Tanaman layu. Kekurangan air dan cahaya menghambat fotosintesis total.";
+                messageColor = "border-red-500 text-red-700";
+            } else if (water < 30) {
+                plantScale = 0.7;
+                plantColor = '#eab308'; // yellowish
+                message = "Kekeringan. Cahaya cukup, tapi tanpa air (abiotik), tanaman tidak bisa bertahan.";
+                messageColor = "border-yellow-500 text-yellow-700";
+            } else if (light < 30) {
+                plantScale = 0.7;
+                plantColor = '#bef264'; // pale green
+                message = "Kurang cahaya. Air cukup, tapi energi dari cahaya (abiotik) kurang untuk fotosintesis.";
+                messageColor = "border-yellow-500 text-yellow-700";
+            } else if (light >= 70 && water >= 70) {
+                plantScale = 1.2;
+                plantColor = '#15803d'; // dark green, healthy
+                message = "Sempurna! Keseimbangan air dan cahaya memicu laju fotosintesis yang optimal.";
+                messageColor = "border-green-500 text-green-700";
+            } else {
+                plantScale = 0.9;
+                message = "Kondisi stabil. Tanaman berfotosintesis dengan cukup.";
+                messageColor = "border-blue-400 text-blue-700";
+            }
+
+            // Apply transformations
+            simPlant.style.transform = `scale(${plantScale})`;
+            leaf1.setAttribute('fill', plantColor);
+            leaf2.setAttribute('fill', plantColor);
+            stem.setAttribute('stroke', stemColor);
+            
+            simFeedback.innerText = message;
+            simFeedback.className = `p-3 bg-white border-l-4 ${messageColor} rounded text-sm min-h-[4rem] flex items-center font-medium transition-colors`;
+        }
+
+        sliderLight.addEventListener('input', updateSimulation);
+        sliderWater.addEventListener('input', updateSimulation);
+        
+        // Initial setup call
+        setTimeout(updateSimulation, 500);
+
+        // --- 4. Quiz Logic ---
+        // PENTING: Ganti URL di bawah ini dengan URL Web App Anda dari Google Apps Script
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzN_zc6Ma2hjN4wMWEYyy6gK4uLFUgLt5vdJ2QgW7S201swTK8us4EfiKugQetgQh1tJA/exec";
+
+        const quizData = [
+            {
+                q: "Apa yang dimaksud dengan ekosistem?",
+                options: [
+                    "Kumpulan hewan di kebun binatang",
+                    "Sistem interaksi makhluk hidup dan lingkungan fisik",
+                    "Tempat menanam pohon di sekolah",
+                    "Kumpulan batu dan air di sungai"
+                ],
+                answer: 1,
+                explanation: "Ekosistem adalah kesatuan interaksi timbal balik antara makhluk hidup (biotik) dengan lingkungan fisiknya (abiotik)."
+            },
+            {
+                q: "Berikut ini yang semuanya merupakan komponen abiotik adalah...",
+                options: [
+                    "Air, tanah, tumbuhan",
+                    "Udara, bakteri, cahaya",
+                    "Suhu, air, cahaya matahari",
+                    "Ikan, teratai, air"
+                ],
+                answer: 2,
+                explanation: "Komponen abiotik adalah unsur tak hidup penyusun ekosistem, seperti cahaya, suhu, air, udara, dan tanah."
+            },
+            {
+                q: "Organisme yang dapat membuat makanannya sendiri melalui fotosintesis disebut...",
+                options: ["Konsumen", "Dekomposer", "Herbivora", "Produsen"],
+                answer: 3,
+                explanation: "Tumbuhan hijau disebut produsen karena mampu menghasilkan makanan sendiri menggunakan energi matahari."
+            },
+            {
+                q: "Jamur dan bakteri dalam ekosistem memiliki peran penting sebagai...",
+                options: ["Produsen", "Konsumen Primer", "Dekomposer (Pengurai)", "Pemangsa"],
+                answer: 2,
+                explanation: "Dekomposer bertugas menguraikan sisa-sisa makhluk hidup yang telah mati menjadi nutrisi untuk tanah."
+            },
+            {
+                q: "Interaksi antara tumbuhan yang membutuhkan cahaya matahari (faktor abiotik) untuk memasak makanan disebut proses...",
+                options: ["Respirasi", "Fotosintesis", "Siklus air", "Predasi"],
+                answer: 1,
+                explanation: "Fotosintesis adalah proses tumbuhan mengubah cahaya matahari, air, dan karbon dioksida menjadi energi dan oksigen."
+            },
+            {
+                q: "Di sekitar Danau Limboto, terdapat burung kuntul yang hinggap di punggung kerbau untuk memakan kutu. Hubungan ini disebut simbiosis...",
+                options: ["Parasitisme", "Mutualisme", "Komensalisme", "Predasi"],
+                answer: 1,
+                explanation: "Simbiosis Mutualisme adalah interaksi dua organisme di mana keduanya saling menguntungkan (Kuntul kenyang, Kerbau bebas kutu)."
+            },
+            {
+                q: "Simbiosis di mana satu makhluk hidup diuntungkan dan yang lainnya dirugikan (seperti benalu pada pohon mangga) disebut...",
+                options: ["Komensalisme", "Parasitisme", "Mutualisme", "Kompetisi"],
+                answer: 1,
+                explanation: "Pada parasitisme, parasit mendapat keuntungan dengan mengambil nutrisi dari inangnya, sehingga inang dirugikan."
+            },
+            {
+                q: "Kumpulan dari beberapa rantai makanan yang saling terhubung di alam disebut...",
+                options: ["Jaring-jaring makanan", "Piramida energi", "Siklus hidup", "Aliran energi"],
+                answer: 0,
+                explanation: "Jaring makanan menggambarkan hubungan makan-memakan yang lebih kompleks karena satu hewan bisa memakan berbagai jenis mangsa."
+            },
+            {
+                q: "Jika air di ekosistem danau menjadi sangat kotor dan kekurangan oksigen (perubahan abiotik), apa dampak langsung bagi komponen biotiknya?",
+                options: [
+                    "Ikan akan berkembang biak lebih cepat",
+                    "Tumbuhan air akan bertambah banyak",
+                    "Populasi ikan akan menurun karena sulit bernapas",
+                    "Tidak ada pengaruh sama sekali"
+                ],
+                answer: 2,
+                explanation: "Komponen biotik sangat bergantung pada kualitas komponen abiotik. Air kotor/minim oksigen mengancam kehidupan akuatik."
+            },
+            {
+                q: "Perpindahan energi dari satu organisme ke organisme lain, misalnya dari rumput dimakan belalang, disebut...",
+                options: ["Siklus mineral", "Simbiosis", "Fotosintesis", "Aliran Energi"],
+                answer: 3,
+                explanation: "Aliran energi terjadi saat proses makan dan dimakan (rantai makanan), memindahkan energi dari produsen hingga konsumen puncak."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let answered = false;
+        
+        let namaSiswa = "";
+        let kelasSiswa = "";
+        let jawabanSiswa = [];
+
+        function startQuiz() {
+            namaSiswa = document.getElementById('input-nama').value.trim();
+            kelasSiswa = document.getElementById('input-kelas').value;
+
+            if (namaSiswa === "" || kelasSiswa === "") {
+                document.getElementById('intro-error').classList.remove('hidden');
+                return;
+            }
+            
+            document.getElementById('intro-error').classList.add('hidden');
+            document.getElementById('quiz-intro').classList.add('hidden');
+            document.getElementById('quiz-container').classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            answered = false;
+            const q = quizData[currentQuestion];
+            
+            document.getElementById('quiz-progress').innerText = `Pertanyaan ${currentQuestion + 1} dari ${quizData.length}`;
+            document.getElementById('quiz-progress-bar').style.width = `${((currentQuestion) / quizData.length) * 100}%`;
+            document.getElementById('quiz-score-live').innerText = score * 10;
+            
+            document.getElementById('quiz-question').innerText = `${currentQuestion + 1}. ${q.q}`;
+            
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+            
+            q.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'quiz-option w-full text-left p-4 rounded-xl border-2 border-gray-200 font-medium text-gray-700 bg-white hover:border-nature-green focus:outline-none';
+                
+                // Add letter prefix
+                const prefix = ['A', 'B', 'C', 'D'][index];
+                btn.innerHTML = `<span class="inline-block w-8 font-bold text-gray-400">${prefix}.</span> ${opt}`;
+                
+                btn.onclick = () => checkAnswer(index, btn);
+                optionsContainer.appendChild(btn);
+            });
+
+            document.getElementById('quiz-feedback').classList.add('hidden');
+            document.getElementById('quiz-next-container').classList.add('hidden');
+        }
+
+        function checkAnswer(selectedIndex, btnElement) {
+            if (answered) return;
+            answered = true;
+
+            const correctIndex = quizData[currentQuestion].answer;
+            const isCorrect = (selectedIndex === correctIndex);
+            
+            const prefix = ['A', 'B', 'C', 'D'][selectedIndex];
+            jawabanSiswa[currentQuestion] = `${prefix}. ${quizData[currentQuestion].options[selectedIndex]}`;
+
+            // Disable all buttons
+            const allBtns = document.querySelectorAll('.quiz-option');
+            allBtns.forEach(b => b.disabled = true);
+
+            // Highlight answers
+            if (isCorrect) {
+                score++;
+                document.getElementById('quiz-score-live').innerText = score * 10;
+                btnElement.classList.add('correct-answer');
+            } else {
+                btnElement.classList.add('wrong-answer');
+                // show correct
+                allBtns[correctIndex].classList.add('correct-answer');
+            }
+
+            // Show Feedback
+            const feedbackBox = document.getElementById('quiz-feedback');
+            const feedbackText = document.getElementById('quiz-feedback-text');
+            const feedbackDetail = document.getElementById('quiz-feedback-detail');
+
+            feedbackBox.classList.remove('hidden');
+            if (isCorrect) {
+                feedbackBox.className = "p-4 rounded-xl mb-4 text-sm bg-green-50 border border-green-200 text-green-800";
+                feedbackText.innerText = "✅ Benar Sekali!";
+            } else {
+                feedbackBox.className = "p-4 rounded-xl mb-4 text-sm bg-red-50 border border-red-200 text-red-800";
+                feedbackText.innerText = "❌ Jawaban Kurang Tepat.";
+            }
+            feedbackDetail.innerText = quizData[currentQuestion].explanation;
+
+            document.getElementById('quiz-next-container').classList.remove('hidden');
+            
+            // Change button text if last question
+            if (currentQuestion === quizData.length - 1) {
+                document.getElementById('btn-next-quiz').innerText = "Lihat Hasil Akhir";
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < quizData.length) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            document.getElementById('quiz-container').classList.add('hidden');
+            document.getElementById('quiz-result').classList.remove('hidden');
+            
+            document.getElementById('loading-save').classList.remove('hidden');
+            document.getElementById('result-content').classList.add('hidden');
+
+            const finalScore = score * 10;
+            document.getElementById('final-score').innerText = finalScore;
+            
+            const msgEl = document.getElementById('result-message');
+            const emojiEl = document.getElementById('result-emoji');
+            
+            if (finalScore >= 80) {
+                msgEl.innerText = "Luar biasa! Kamu sudah sangat memahami materi Ekosistem.";
+                emojiEl.innerText = "🌟";
+                document.getElementById('final-score').className = "text-5xl font-heading font-bold text-green-500 mb-8";
+            } else if (finalScore >= 60) {
+                msgEl.innerText = "Bagus! Pemahamanmu sudah cukup baik. Coba pelajari ulang bagian interaksi.";
+                emojiEl.innerText = "👍";
+                document.getElementById('final-score').className = "text-5xl font-heading font-bold text-sky-500 mb-8";
+            } else {
+                msgEl.innerText = "Jangan menyerah! Ayo baca kembali modulnya dan coba kuis ini lagi.";
+                emojiEl.innerText = "📚";
+                document.getElementById('final-score').className = "text-5xl font-heading font-bold text-red-500 mb-8";
+            }
+            
+            // Panggil fungsi kirim data
+            simpanKeDatabase(finalScore);
+        }
+
+        function simpanKeDatabase(finalScore) {
+            if (GAS_WEB_APP_URL === "URL_WEB_APP_GOOGLE_SCRIPT_ANDA_DISINI" || GAS_WEB_APP_URL === "") {
+                console.warn("URL Google Apps Script belum disetting. Data tidak disimpan.");
+                document.getElementById('loading-save').classList.add('hidden');
+                document.getElementById('result-content').classList.remove('hidden');
+                return;
+            }
+
+            const payloadData = {
+                nama: namaSiswa,
+                kelas: kelasSiswa,
+                skor: finalScore,
+                benar: score,
+                salah: quizData.length - score,
+                jawaban: jawabanSiswa
+            };
+
+            // Menggunakan mode no-cors untuk mengabaikan pencegahan Preflight Google
+            fetch(GAS_WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors', 
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payloadData)
+            })
+            .then(() => {
+                // Request berhasil terkirim
+                setTimeout(() => {
+                    document.getElementById('loading-save').classList.add('hidden');
+                    document.getElementById('result-content').classList.remove('hidden');
+                }, 800); // Simulasi delay cantik
+            })
+            .catch(error => {
+                console.error("Gagal menyimpan ke database:", error);
+                document.getElementById('loading-save').classList.add('hidden');
+                document.getElementById('result-content').classList.remove('hidden');
+                alert("Gangguan jaringan: Hasil kamu ditampilkan namun mungkin belum masuk ke database Guru.");
+            });
+        }
+
+        function resetQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            jawabanSiswa = [];
+            document.getElementById('input-nama').value = ""; // Kosongkan nama jika user ingin ulang dengan nama lain (opsional)
+            
+            document.getElementById('quiz-result').classList.add('hidden');
+            // Kembali ke halaman input data diri
+            document.getElementById('quiz-intro').classList.remove('hidden');
+        }
+
+        // Initialize drag and drop on load
+        window.addEventListener('DOMContentLoaded', initDragAndDrop);
+        
+        // Dihapus karena loadQuestion dipanggil via startQuiz()
+        // window.addEventListener('DOMContentLoaded', loadQuestion);
+
+    </script>
+</body>
+</html>
